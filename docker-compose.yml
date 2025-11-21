@@ -1,0 +1,8 @@
+version: '3.9'
+services:
+  tfg-testing-env:
+    build: .
+    container_name: tfg_env
+    volumes:
+      - .:/workspace
+    tty: true
