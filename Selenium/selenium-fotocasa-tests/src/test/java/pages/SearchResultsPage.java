@@ -14,6 +14,28 @@ public class SearchResultsPage extends BasePage {
 
     // Selector de precios dentro de los anuncios
     private final By priceElements = By.cssSelector("span[class*='price'], div[class*='price']");
+    // Localizador del primer anuncio
+    private final By firstResultLink = By.cssSelector("article a[href*='/es/']");
+
+    public void openFirstResult() {
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(firstResultLink));
+
+        // Pausa humana para evitar bloqueo
+        try { Thread.sleep(800); } catch (Exception ignored) {}
+
+        // Abrir en nueva pestaña
+        String newTab = Keys.chord(Keys.CONTROL, Keys.RETURN);
+        element.sendKeys(newTab);
+
+        // Cambiar a la nueva pestaña abierta
+        for (String handle : driver.getWindowHandles()) {
+            driver.switchTo().window(handle);
+        }
+
+        // Otra pequeña pausa
+        try { Thread.sleep(1200); } catch (Exception ignored) {}
+    }
+
 
 
     // --- FILTRO DE PRECIO ---
@@ -41,6 +63,9 @@ public class SearchResultsPage extends BasePage {
     // ---------------------------
     // MÉTODOS DE LA PÁGINA
     // ---------------------------
+    // Primer anuncio de la lista
+
+
 
     public boolean isLoaded() {
         try {
@@ -61,6 +86,8 @@ public class SearchResultsPage extends BasePage {
             wait.until(ExpectedConditions.elementToBeClickable(closePopupBtn)).click();
         } catch (Exception ignored) {}
     }
+
+
 
     public boolean hasResults() {
         try {
@@ -117,5 +144,61 @@ public class SearchResultsPage extends BasePage {
             return false;
         }
     }
+    // Selector genérico para ir a una página concreta
+    private By pageByNumber(String number) {
+        return By.cssSelector("a[aria-label='Página " + number + "']");
+    }
+
+    // Ir a la página N
+    public void goToPage(String pageNumber) {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        By paginationContainer = By.cssSelector("nav[data-panot-component='pagination']");
+        int maxAttempts = 30;        // muchos intentos porque la paginación tarda en aparecer
+        int scrollStep = 800;        // scroll gradual
+
+        for (int i = 0; i < maxAttempts; i++) {
+
+            // ¿La paginación ya existe y es visible?
+            if (driver.findElements(paginationContainer).size() > 0) {
+                WebElement container = driver.findElement(paginationContainer);
+
+                if (container.isDisplayed()) {
+                    break; // ¡Paginación encontrada!
+                }
+            }
+
+            // Scroll hacia abajo
+            js.executeScript("window.scrollBy(0, arguments[0]);", scrollStep);
+
+            // Pequeña pausa para que carguen los anuncios
+            try { Thread.sleep(300); } catch (InterruptedException ignored) {}
+        }
+
+        // Ahora esperamos directamente el botón de página
+        By pageButton = By.cssSelector("a[aria-label='Página " + pageNumber + "']");
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(pageButton));
+
+        // Centrarlo para evitar errores
+        js.executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+
+        element.click();
+    }
+
+
+
+
+
+    // Validar que estamos en la página N
+    public boolean isOnPage(String pageNumber) {
+        try {
+            By selector = By.cssSelector("a[aria-label='Página " + pageNumber + "'][aria-current='page']");
+            wait.until(ExpectedConditions.visibilityOfElementLocated(selector));
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
 
 }
