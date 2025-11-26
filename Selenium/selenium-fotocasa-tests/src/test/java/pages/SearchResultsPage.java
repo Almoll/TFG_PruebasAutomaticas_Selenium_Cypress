@@ -3,6 +3,8 @@ package pages;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import java.util.List;
+import org.openqa.selenium.support.ui.WebDriverWait; // Para resolver 'WebDriverWait'
+import java.time.Duration; // Para resolver 'Duration'
 
 public class SearchResultsPage extends BasePage {
 
@@ -184,6 +186,163 @@ public class SearchResultsPage extends BasePage {
 
         element.click();
     }
+    // --- SELECTOR COMÚN PARA BOTONES DE ACCIÓN EN MODALES/POPOVERS ---
+// Usado para "Mostrar X viviendas" o "Aplicar filtros" en pop-ups/modales, incluyendo el botón de "volver"
+    private final By modalActionButton =
+            By.cssSelector("div.sui-MoleculeModal-footer button.sui-AtomButton--primary, .sui-MoleculeSelectPopover-popoverActionBar button");
+
+    // ---------------------------------
+// FILTRO PRINCIPAL: "Filtros (0)"
+// ---------------------------------
+// Botón principal "Filtros (0)" en la barra de búsqueda
+    private final By mainFiltersButton =
+            By.cssSelector("button.re-SearchFiltersTop-filtersButton");
+
+    public void openAllFiltersModal() {
+        wait.until(ExpectedConditions.elementToBeClickable(mainFiltersButton)).click();
+    }
+
+    // ---------------------------
+// FILTRO: DISTRITO
+// ---------------------------
+// 1. Dropdown de Distrito dentro del modal
+    private final By districtDropdown =
+            By.cssSelector("#search-geographic-select-popover-\\:rt\\:");
+
+    // 2. Opción "Arganzuela" (ejemplo de la primera opción a seleccionar)
+    private final By arganzuelaOption = By.cssSelector("a[title='Arganzuela']");
+
+    public void selectDistrictArganzuela() {
+        // 1. Abrir el dropdown de Distrito
+        wait.until(ExpectedConditions.elementToBeClickable(districtDropdown)).click();
+
+        // 2. Seleccionar Arganzuela
+        wait.until(ExpectedConditions.elementToBeClickable(arganzuelaOption)).click();
+
+        // 3. Aplicar filtros (Botón "Mostrar anuncios") y volver al modal principal
+        applyFiltersAndBack();
+    }
+
+    // ---------------------------
+// FILTRO: TRANSACCIÓN (Comprar/Alquilar)
+// ---------------------------
+// 1. Dropdown de Transacción
+// Uso de XPath para localizar el input 'Comprar' y subir al contenedor principal
+    private final By transactionTypeDropdown =
+            By.cssSelector(".re-FiltersFilterTransactionType .sui-MoleculeSelect-inputSelect-container");
+
+    // 2. Opción de dropdown con valor 'alquiler'
+    private By transactionOption(String value) {
+        return By.cssSelector("li.sui-MoleculeDropdownOption[data-value='" + value + "']");
+    }
+
+    public void selectTransactionTypeRent() {
+        // Localizador del dropdown de Transacción (el que abre el menú)
+        final By transactionTypeDropdown =
+                By.cssSelector(".re-FiltersFilterTransactionType .sui-MoleculeSelect-inputSelect-container");
+
+        wait.until(ExpectedConditions.elementToBeClickable(transactionTypeDropdown)).click();
+        System.out.println("-> Dropdown de Transacción abierto.");
+
+        // --- NUEVO SELECTOR DEFINITIVO: Busca el <li> que contiene el <span> con texto 'Alquilar' ---
+        // Usamos 'normalize-space()' para manejar espacios extra.
+        By rentOptionNestedSpan = By.xpath("//li[./span[normalize-space(text())='Alquilar']]");
+
+        // Opcional: Pausa de sincronización si es necesario
+        try { Thread.sleep(500); } catch (InterruptedException e) {}
+
+        // Esperar y seleccionar
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(rentOptionNestedSpan));
+        System.out.println("-> Opción 'Alquilar' localizada y lista para clic.");
+        element.click();
+    }
+
+    // ---------------------------
+// FILTRO: TIPO DE ALQUILER (Larga Duración)
+// ---------------------------
+// Checkbox para "Larga duración" (usando el 'for' del label)
+    private final By longTermRentalCheckbox =
+            By.cssSelector("label[for='filter-rental-duration-LONG_TERM']");
+
+    public void selectLongTermRental() {
+        wait.until(ExpectedConditions.elementToBeClickable(longTermRentalCheckbox)).click();
+    }
+
+    // ---------------------------
+// FILTRO: EXTRAS (Ascensor)
+// ---------------------------
+// Botón para "Ascensor" (Uso de XPath para localizar por texto 'Ascensor')
+    // Selector mejorado: Busca el botón que contiene el texto "Ascensor" en cualquier descendiente
+    private final By elevatorFeatureButton =
+            By.xpath("//button[.//span[text()='Ascensor']]");
+
+    private final By extrasTitle = By.xpath("//div[text()='Extras']");
+
+    public void selectElevatorFeature() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        // 1. FORZAR SCROLL HASTA EL TÍTULO "Extras"
+        // Esto asegura que el área del filtro se cargue en el viewport antes de buscar el botón.
+        WebElement extrasHeader = wait.until(ExpectedConditions.presenceOfElementLocated(extrasTitle));
+        js.executeScript("arguments[0].scrollIntoView(true);", extrasHeader);
+
+        // Pequeña pausa para que se complete el scroll y la carga (crucial en modals)
+        try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+
+        // 2. Localizar el botón de Ascensor (usando el selector mejorado de la Solución 1)
+        // Usaremos el XPath simplificado que busca el botón que contiene el texto.
+        By elevatorButton = By.xpath("//button[.//span[text()='Ascensor']]");
+
+        // 3. Esperar a que el botón sea visible y clickeable
+        WebElement element = wait.until(ExpectedConditions.elementToBeClickable(elevatorButton));
+
+        // 4. Hacer clic
+        element.click();
+        System.out.println("-> Clic realizado en 'Ascensor'.");
+    }
+    // --- NUEVO SELECTOR PARA EL BOTÓN FINAL (Añadir a SearchResultsPage.java) ---
+
+    private final By finalApplyButton =
+            By.xpath("//footer//button[contains(normalize-space(.), 'Mostrar')]");
+    // -------------------------------------------------------------------
+
+    public void applyFinalFiltersAndSearch() {
+        JavascriptExecutor js = (JavascriptExecutor) driver;
+
+        System.out.println("-> Intentando hacer clic en el botón final 'Mostrar X anuncios'...");
+
+        // 1. Esperar la PRESENCIA del botón (usando el nuevo selector corregido)
+        WebElement button = wait.until(ExpectedConditions.presenceOfElementLocated(finalApplyButton));
+
+        // 2. FORZAR EL CLIC CON JAVASCRIPT
+        // Esto ignora si hay algo encima o si Selenium piensa que no es visible.
+        js.executeScript("arguments[0].click();", button);
+
+        System.out.println("-> Clic forzado por JavaScript ejecutado. Esperando que el modal se cierre.");
+
+        // 3. Esperar que el modal desaparezca
+        By modalDialog = By.cssSelector("div.sui-MoleculeModal-dialog");
+        try {
+            // Damos un margen amplio (15s) para que recargue la página
+            new WebDriverWait(driver, Duration.ofSeconds(15)).until(
+                    ExpectedConditions.invisibilityOfElementLocated(modalDialog)
+            );
+            System.out.println("-> El modal de filtros se cerró correctamente.");
+        } catch (Exception e) {
+            System.err.println("¡Advertencia! El modal no se cerró a tiempo (o ya se había cerrado), continuamos.");
+        }
+    }
+
+
+    // ---------------------------
+// MÉTODO COMÚN DE APLICAR/VOLVER DEL MODAL
+// ---------------------------
+    public void applyFiltersAndBack() {
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(modalActionButton)).click();
+        } catch (Exception ignored) {}
+    }
+    // Selector común para botones de acción en modales/popovers
 
 
 
