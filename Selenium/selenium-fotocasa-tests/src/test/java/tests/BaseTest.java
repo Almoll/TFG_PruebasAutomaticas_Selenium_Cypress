@@ -4,8 +4,10 @@ import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.Proxy;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+
 
 import java.util.HashMap;
 import java.util.Map;
@@ -17,7 +19,18 @@ public class BaseTest {
     @BeforeEach
     public void setUp() {
 
+        // --- Configuración del Proxy (¡Necesitas tu IP/Puerto real!) ---
+        String proxyIpAndPort = "IP_DE_TU_PROXY:PUERTO"; // <-- REEMPLAZA ESTO
+
+        Proxy proxy = new Proxy();
+        proxy.setHttpProxy(proxyIpAndPort);
+        proxy.setSslProxy(proxyIpAndPort);
+        // -----------------------------------------------------------------
+
         ChromeOptions options = new ChromeOptions();
+
+        // --- 0. Añadir el Proxy a las Opciones ---
+        options.setCapability("proxy", proxy); // <-- NUEVA LÍNEA CLAVE
 
         // --- 1. Oculta que es automation ---
         options.setExperimentalOption("excludeSwitches", new String[]{"enable-automation"});
