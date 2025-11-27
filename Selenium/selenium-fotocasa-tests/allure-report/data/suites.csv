@@ -1,0 +1,7 @@
+"DESCRIPTION","DURATION IN MS","NAME","PARENT SUITE","START TIME","STATUS","STOP TIME","SUB SUITE","SUITE","TEST CLASS","TEST METHOD"
+"","18595","testMinPriceFilter()","","2025-11-26","passed","2025-11-26","","tests.SearchFiltersTest","tests.SearchFiltersTest","testMinPriceFilter"
+"","26775","testGoToPage2()","","2025-11-26","failed","2025-11-26","","tests.PaginationTest","tests.PaginationTest","testGoToPage2"
+"","30595","testOpenPropertyDetails()","","2025-11-26","failed","2025-11-26","","tests.SearchDetailsTest","tests.SearchDetailsTest","testOpenPropertyDetails"
+"","17998","testSearchMadrid()","","2025-11-26","passed","2025-11-26","","tests.SearchTest","tests.SearchTest","testSearchMadrid"
+"","4709","testHomeLoadsCorrectly()","","2025-11-26","passed","2025-11-26","","tests.HomePageTest","tests.HomePageTest","testHomeLoadsCorrectly"
+"","14568","applyMultipleFiltersAndValidateResults()","","2025-11-26","passed","2025-11-26","","tests.AdvancedFiltersTest","tests.AdvancedFiltersTest","applyMultipleFiltersAndValidateResults"
