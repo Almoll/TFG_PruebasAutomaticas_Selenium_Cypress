@@ -19,7 +19,7 @@ class SearchResultsPage {
 
     // --- FILTROS AVANZADOS (MODAL) ---
     get mainFiltersButton() { return cy.get('button.re-SearchFiltersTop-filtersButton'); }
-    get districtDropdown() { return cy.get('#search-geographic-select-popover-\\:rt\\:'); } 
+    get districtDropdown() { return cy.get('.sui-MoleculeModal-dialog').find('div[title="Distrito"]'); } 
     get arganzuelaOption() { return cy.get("a[title='Arganzuela']"); }
     get transactionTypeDropdown() { return cy.get(".re-FiltersFilterTransactionType .sui-MoleculeSelect-inputSelect-container"); }
     get rentOption() { return cy.xpath("//li[./span[normalize-space(text())='Alquilar']]"); }
@@ -80,8 +80,7 @@ class SearchResultsPage {
     // FILTROS AVANZADOS (CORREGIDO)
     // ---------------------------
     openAllFiltersModal() {
-        // CORRECCIÓN CRÍTICA: Nos aseguramos que el botón existe y está habilitado
-        // antes de hacer el clic forzado.
+        
         this.mainFiltersButton
             .should('exist')
             .and('not.be.disabled')
@@ -92,29 +91,58 @@ class SearchResultsPage {
     }
 
     selectDistrictArganzuela() {
-        this.districtDropdown.click();
-        this.arganzuelaOption.scrollIntoView().click();
-        cy.get('.sui-MoleculeSelectPopover-popoverActionBar button').click({ force: true });
+        this.districtDropdown
+            .should('be.visible') // Aseguramos visibilidad
+            .click();
+
+        this.arganzuelaOption
+            .should('be.visible')
+            .scrollIntoView()
+            .click();
+
+        // Aplicamos el filtro en el POP-UP del distrito y volvemos al modal principal.
+        cy.get('.sui-MoleculeSelectPopover-popoverActionBar button')
+            .should('be.visible')
+            .click({ force: true }); 
     }
 
     selectTransactionTypeRent() {
-        this.transactionTypeDropdown.scrollIntoView().click({ force: true });
-        this.rentOption.should('be.visible').click();
+        this.transactionTypeDropdown
+            .scrollIntoView()
+            .should('be.visible')
+            .click({ force: true }); // Click forzado en el dropdown.
+
+        this.rentOption
+            .should('be.visible')
+            .click(); // Clic en la opción 'Alquilar'.
+        cy.log('Filtro de Transacción (Alquiler) aplicado.');
     }
 
     selectLongTermRental() {
-        this.longTermRentalCheckbox.scrollIntoView().click();
+        this.longTermRentalCheckbox
+            .scrollIntoView()
+            .click();
+        cy.log('Filtro de Larga duración aplicado.');
     }
 
     selectElevatorFeature() {
-        cy.contains('div', 'Extras').scrollIntoView();
-        cy.wait(500); 
+        this.elevatorFeatureButton
+            .scrollIntoView({ block: 'center' }) 
+            .should('be.visible'); 
+          
         this.elevatorFeatureButton.click({ force: true });
+        cy.log('Filtro de Ascensor aplicado.');
     }
 
     applyFinalFiltersAndSearch() {
-        this.finalApplyButton.click();
-        cy.get('.sui-MoleculeModal-dialog').should('not.exist');
+        this.finalApplyButton
+            .should('be.visible')
+            .click();
+        
+        // Esperamos a que el MODAL PRINCIPAL desaparezca antes de continuar con la validación.
+        cy.get('.sui-MoleculeModal-dialog', { timeout: 10000 }).should('not.exist');
+        cy.log('Botón final clickeado. Modal cerrado.');
+    
     }
 }
 
