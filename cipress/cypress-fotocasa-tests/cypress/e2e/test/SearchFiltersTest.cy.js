@@ -1,35 +1,32 @@
-import homePage from '../pages/HomePage';
-import searchResultsPage from '../pages/SearchResultsPage';
+import homePage from '../pages/HomePage'; 
+import searchResultsPage from '../pages/SearchResultsPage'; 
 
-describe('Fotocasa: Tests de Filtros de Búsqueda', () => {
+describe('Fotocasa: Filtro de Precio Mínimo', () => {
 
-    it('Debe aplicar un filtro de precio mínimo (100.000) y validar los resultados', () => {
-        
-        const MIN_PRICE_VALUE = 100000;
-        const MIN_PRICE_SELECTOR_KEY = "100000"; // El valor que se envía al selector del dropdown
+    it('Debe aplicar un filtro de precio mínimo y validar que todos los resultados cumplen', () => {
+        const MIN_PRICE_VALUE = '100000'; // Valor que se pasa al select
+        const MIN_PRICE_CHECK = 100000;   // Valor numérico para la validación
 
-        cy.log('1. Abrir la Home, aceptar cookies y buscar "Madrid"');
+        cy.log('1. Abriendo la home y buscando "Madrid"');
         homePage.open();
         homePage.acceptCookiesIfPresent();
         homePage.searchCity("Madrid");
 
-        cy.log('2. Cerrar popups de notificaciones si existen');
+        cy.log('2. Cerrando popups y verificando carga inicial');
         searchResultsPage.closeNotificationsPopupIfPresent();
         searchResultsPage.isLoaded(); 
 
-        cy.log('3. Abrir el filtro de precio y seleccionar el valor mínimo');
+        cy.log(`3. Aplicando filtro de precio mínimo: ${MIN_PRICE_VALUE}`);
         searchResultsPage.openMinPriceDropdown();
-        searchResultsPage.selectMinPrice(MIN_PRICE_SELECTOR_KEY); 
+        searchResultsPage.selectMinPrice(MIN_PRICE_VALUE);  
         searchResultsPage.applyFilters();
 
-        cy.log('4. Cerrar posibles popups post-carga y verificar la carga de la página');
-        // Este paso es crucial, ya que aplicar filtros recarga la página.
+        cy.log('4. Cerrando popups y verificando recarga');
         searchResultsPage.closeNotificationsPopupIfPresent();
         searchResultsPage.isLoaded(); 
         
-        cy.log('5. Aserción: Verificar que todos los precios son mayores o iguales a 100.000');
-        searchResultsPage.allResultsAreAbove(MIN_PRICE_VALUE); 
+        cy.log(`5. VALIDACIÓN: Comprobar que todos los precios son mayores o iguales a ${MIN_PRICE_CHECK}`);
+        // La aserción se realiza dentro del método allResultsAreAbove
+        searchResultsPage.allResultsAreAbove(MIN_PRICE_CHECK); 
     });
-    
-    // Podemos añadir más tests de filtros aquí si lo deseas.
 });
