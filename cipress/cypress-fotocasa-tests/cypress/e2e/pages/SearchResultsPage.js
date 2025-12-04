@@ -27,6 +27,8 @@ class SearchResultsPage {
     get elevatorFeatureButton() { return cy.xpath("//button[.//span[text()='Ascensor']]"); }
     get finalApplyButton() { return cy.xpath("//footer//button[contains(normalize-space(.), 'Mostrar')]"); }
 
+    
+
 
     // ==========================================
     //  MÉTODOS DE INTERACCIÓN
@@ -37,10 +39,28 @@ class SearchResultsPage {
         this.resultCard.should('have.length.at.least', 1);
     }
 
+    getTitleText(){
+        cy.get(this.resultsTitle).should('have.text', 'Texto esperado');
+
+
+    }
+
     closeNotificationsPopupIfPresent() {
         cy.get('body').then(($body) => {
-            if ($body.find('button.sui-MoleculeModal-close').length > 0) {
-                cy.get('button.sui-MoleculeModal-close').filter(':visible').click({ force: true });
+            // Buscamos el botón de cierre del modal por el selector común
+            const closeModalButtonSelector = 'button.sui-MoleculeModal-close';
+
+            if ($body.find(closeModalButtonSelector).length > 0) {
+                // Si el botón existe, lo forzamos a cerrarse.
+                cy.get(closeModalButtonSelector)
+                    .filter(':visible')
+                    .click({ force: true });
+                
+                // Agregamos una espera explícita para que el modal desaparezca completamente
+                cy.get(closeModalButtonSelector).should('not.exist', { timeout: 5000 });
+                cy.log('Popup de notificaciones/alertas cerrado.');
+            } else {
+                cy.log('No se encontró el popup de notificaciones/alertas.');
             }
         });
     }
@@ -144,6 +164,51 @@ class SearchResultsPage {
         cy.log('Botón final clickeado. Modal cerrado.');
     
     }
+    
+    goToPage(pageNumber) {
+        cy.log(`Navegando a la página ${pageNumber}...`);
+
+        this.resultCard.last().scrollIntoView();
+
+        cy.get("nav[data-panot-component='pagination']", { timeout: 10000 })
+            .should('be.visible');
+
+        cy.get(`a[aria-label='Página ${pageNumber}']`)
+            .scrollIntoView({ block: 'center' }) 
+            .should('be.visible')
+            .click();
+    }
+
+    isOnPage(pageNumber) {
+        cy.log(`Verificando que estamos en la página ${pageNumber}`);
+        const activePageSelector = `a[aria-label='Página ${pageNumber}'][aria-current='page']`;
+        
+        // La aserción 'should('be.visible')' actúa como la validación final del `assertTrue` de Selenium.
+        cy.get(activePageSelector).should('be.visible');
+    }
+
+    hasResults() {
+        return this.resultCard.should('have.length.gt', 0);
+    }
+
+    // Abre el primer resultado forzando que sea en la MISMA pestaña
+    openFirstResult() {
+        cy.log('Abriendo el primer resultado…');
+
+        cy.get('article').first().within(() => {
+        // Buscar el enlace seguro del anuncio
+            cy.get("a[href*='/es/']")
+              .filter(':visible')
+              .first()
+              .scrollIntoView()
+              .invoke('removeAttr', 'target')
+              .click({ force: true });
+        });
+
+       // Asegurar navegación
+       cy.url({ timeout: 10000 }).should('include', '/es/');
+    }
 }
+
 
 export default new SearchResultsPage();
