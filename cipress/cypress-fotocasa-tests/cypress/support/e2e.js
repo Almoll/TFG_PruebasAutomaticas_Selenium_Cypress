@@ -15,6 +15,8 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands'
+import '@shelex/cypress-allure-plugin';
+
 Cypress.on('uncaught:exception', (err, runnable) => {
   // Devuelve false para evitar que Cypress falle el test si la web lanza un error de JS
   return false;
