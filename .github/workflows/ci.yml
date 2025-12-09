@@ -1,107 +1,65 @@
-name: Run Selenium & Cypress Tests with Allure
+name: CI - Selenium & Cypress with Allure
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ main ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ main ]
 
 jobs:
-
-  test:
+  test-and-report:
     runs-on: ubuntu-latest
-    steps:
 
-      - name: Checkout repository
+    steps:
+      - name: Checkout repo
         uses: actions/checkout@v4
 
-      # -------------------------
-      #   SELENIUM (MAVEN-JAVA)
-      # -------------------------
-      - name: Set up JDK 17
+      # -------------------
+      # 1) Ejecutar Selenium
+      # -------------------
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
-      - name: Run Selenium tests
+      - name: Run Selenium Tests (Maven)
+        working-directory: Selenium/selenium-fotocasa-tests
+        run: mvn clean test
+
+      - name: Copy Selenium Allure results
         run: |
-          cd Selenium/selenium-fotocasa-tests
-          mvn clean test
+          mkdir -p joint-allure-results
+          cp -r Selenium/selenium-fotocasa-tests/target/allure-results/* joint-allure-results/
 
-      - name: Upload Selenium Allure results
-        uses: actions/upload-artifact@v4
-        with:
-          name: selenium-allure-results
-          path: Selenium/selenium-fotocasa-tests/target/allure-results
 
-      # -------------------------
-      #   CYPRESS (NODEJS)
-      # -------------------------
-      - name: Set up Node
+      # -------------------
+      # 2) Ejecutar Cypress
+      # -------------------
+      - name: Install Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: '18'
 
       - name: Install Cypress dependencies
-        run: |
-          cd cipress/cypress-fotocasa-tests
-          npm install
+        working-directory: cipress/cypress-fotocasa-tests
+        run: npm install
 
       - name: Run Cypress tests
-        run: |
-          cd cipress/cypress-fotocasa-tests
-          npx cypress run
+        working-directory: cipress/cypress-fotocasa-tests
+        run: npx cypress run
 
-      - name: Upload Cypress Allure results
-        uses: actions/upload-artifact@v4
+      - name: Copy Cypress Allure results
+        run: cp -r cipress/cypress-fotocasa-tests/allure-results/* joint-allure-results/
+
+
+      # -------------------
+      # 3) Generar Allure Report unificado
+      # -------------------
+      - name: Generate Allure HTML report
+        uses: simple-elf/allure-report-action@v1.7
         with:
-          name: cypress-allure-results
-          path: cipress/cypress-fotocasa-tests/allure-results
-
-  # -------------------------
-  #     MERGE & REPORT
-  # -------------------------
-  allure-report:
-    needs: test
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      # Descargar artefactos
-      - name: Download Selenium results
-        uses: actions/download-artifact@v4
-        with:
-          name: selenium-allure-results
-          path: merged
-
-      - name: Download Cypress results
-        uses: actions/download-artifact@v4
-        with:
-          name: cypress-allure-results
-          path: merged
-
-      # Instalar Allure CLI
-      - name: Install Allure
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y default-jre
-          wget https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
-          tar -xvzf allure-2.29.0.tgz
-          sudo mv allure-2.29.0 /opt/allure
-          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
-
-      # Generar report
-      - name: Generate Allure report
-        run: |
-          allure generate merged -o allure-report --clean
-
-      # Subir report a GitHub Pages
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: allure-report
-          destination_dir: allure
+          allure_results: joint-allure-results
+          gh_pages: true
+          publish_branch: gh-pages
+          publish_dir: ./allure-report
