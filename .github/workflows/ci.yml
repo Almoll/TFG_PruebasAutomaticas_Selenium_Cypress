@@ -6,7 +6,6 @@ on:
   pull_request:
     branches: [ main ]
 
-# Permisos necesarios para que el bot pueda publicar en gh-pages
 permissions:
   contents: write
 
@@ -61,20 +60,19 @@ jobs:
           cp -r cipress/cypress-fotocasa-tests/allure-results/* joint-allure-results/ || true
 
       # -------------------
-      # 3) Generar Allure Report unificado
+      # 3) Generar Allure Report (Solo Generar)
       # -------------------
       - name: Generate Allure HTML report
         uses: simple-elf/allure-report-action@v1.7
         if: always()
-        id: allure-report
         with:
           allure_results: joint-allure-results
-          gh_pages: true
           allure_report: allure-report
-          allure_history: allure-history
+          # NOTA: He quitado gh_pages: true aquí para evitar conflictos internos
+          # y he quitado publish_branch/dir porque causaban el error de Docker.
 
       # -------------------
-      # 4) Publicar en GitHub Pages
+      # 4) Publicar en GitHub Pages (Paso separado)
       # -------------------
       - name: Deploy report to Github Pages
         if: always()
