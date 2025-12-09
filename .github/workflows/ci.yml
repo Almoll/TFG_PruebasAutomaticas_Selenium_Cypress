@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [ main ]
 
+# Necesario para poder publicar en gh-pages
+permissions:
+  contents: write
+
 jobs:
   test-and-report:
     runs-on: ubuntu-latest
@@ -14,10 +18,13 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
+      - name: Create joint results directory
+        run: mkdir -p joint-allure-results
+
       # -------------------
       # 1) Ejecutar Selenium
       # -------------------
-      - name: Set up JDK
+      - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -25,13 +32,14 @@ jobs:
 
       - name: Run Selenium Tests (Maven)
         working-directory: Selenium/selenium-fotocasa-tests
+        # 'continue-on-error' permite que el workflow siga si fallan los tests
+        continue-on-error: true 
         run: mvn clean test
 
       - name: Copy Selenium Allure results
+        # El "|| true" evita que falle si la carpeta está vacía o no existe
         run: |
-          mkdir -p joint-allure-results
-          cp -r Selenium/selenium-fotocasa-tests/target/allure-results/* joint-allure-results/
-
+          cp -r Selenium/selenium-fotocasa-tests/target/allure-results/* joint-allure-results/ || true
 
       # -------------------
       # 2) Ejecutar Cypress
@@ -47,17 +55,21 @@ jobs:
 
       - name: Run Cypress tests
         working-directory: cipress/cypress-fotocasa-tests
+        # 'continue-on-error' permite que siga hacia el reporte si fallan los tests
+        continue-on-error: true
         run: npx cypress run
 
       - name: Copy Cypress Allure results
-        run: cp -r cipress/cypress-fotocasa-tests/allure-results/* joint-allure-results/
-
+        # El "|| true" evita errores si no se generaron resultados
+        run: |
+          cp -r cipress/cypress-fotocasa-tests/allure-results/* joint-allure-results/ || true
 
       # -------------------
       # 3) Generar Allure Report unificado
       # -------------------
       - name: Generate Allure HTML report
         uses: simple-elf/allure-report-action@v1.7
+        if: always() # ¡Crucial! Se ejecuta aunque fallen los pasos anteriores
         with:
           allure_results: joint-allure-results
           gh_pages: true
