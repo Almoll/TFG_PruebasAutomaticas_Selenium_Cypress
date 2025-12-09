@@ -20,9 +20,7 @@ jobs:
       - name: Create joint results directory
         run: mkdir -p joint-allure-results
 
-      # -------------------
-      # 1) Ejecutar Selenium
-      # -------------------
+      # --- 1) Ejecutar Selenium ---
       - name: Set up JDK 21
         uses: actions/setup-java@v4
         with:
@@ -31,16 +29,14 @@ jobs:
 
       - name: Run Selenium Tests (Maven)
         working-directory: Selenium/selenium-fotocasa-tests
-        continue-on-error: true 
+        continue-on-error: true
         run: mvn clean test
 
       - name: Copy Selenium Allure results
         run: |
           cp -r Selenium/selenium-fotocasa-tests/target/allure-results/* joint-allure-results/ || true
 
-      # -------------------
-      # 2) Ejecutar Cypress
-      # -------------------
+      # --- 2) Ejecutar Cypress ---
       - name: Install Node
         uses: actions/setup-node@v4
         with:
@@ -59,24 +55,26 @@ jobs:
         run: |
           cp -r cipress/cypress-fotocasa-tests/allure-results/* joint-allure-results/ || true
 
-      # -------------------
-      # 3) Generar Allure Report (Solo Generar)
-      # -------------------
-      - name: Generate Allure HTML report
-        uses: simple-elf/allure-report-action@v1.7
+      # --- 3) Generar Reporte con Allure CLI (Más estable) ---
+      - name: Install Allure CLI
+        run: |
+          sudo wget -O allure-commandline.zip https://github.com/allure-framework/allure2/releases/download/2.27.0/allure-2.27.0.zip
+          sudo unzip allure-commandline.zip -d /opt/allure
+          export PATH=$PATH:/opt/allure/allure-2.27.0/bin
+          allure --version
+      
+      # NOTA: Usamos 'shell: bash' para asegurarnos de que el PATH se conserve
+      - name: Generate Allure Report
         if: always()
-        with:
-          allure_results: joint-allure-results
-          allure_report: allure-report
-          # NOTA: He quitado gh_pages: true aquí para evitar conflictos internos
-          # y he quitado publish_branch/dir porque causaban el error de Docker.
+        shell: bash
+        run: |
+          export PATH=$PATH:/opt/allure/allure-2.27.0/bin
+          allure generate --clean joint-allure-results -o allure-report
 
-      # -------------------
-      # 4) Publicar en GitHub Pages (Paso separado)
-      # -------------------
+      # --- 4) Publicar en GitHub Pages ---
       - name: Deploy report to Github Pages
-        if: always()
         uses: peaceiris/actions-gh-pages@v3
+        if: always()
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
