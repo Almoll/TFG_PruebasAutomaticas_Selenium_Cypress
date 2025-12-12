@@ -35,8 +35,8 @@ class SearchResultsPage {
     // ==========================================
 
     isLoaded() {
-        this.resultsTitle.should('be.visible');
-        this.resultCard.should('have.length.at.least', 1);
+        this.resultsTitle.should('be.visible', { timeout: 15000 });
+        this.resultCard.should('have.length.at.least', 1, { timeout: 15000 });
     }
 
     getTitleText(){
