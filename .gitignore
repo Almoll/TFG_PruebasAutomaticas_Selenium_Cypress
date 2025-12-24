@@ -1,1 +1,6 @@
 cipress/cypress-fotocasa-tests/cypress/screenshots/SearchDetailsTest.cy.js/Fotocasa Navegación a Detalle de Inmueble -- Debe buscar en Madrid y abrir el detalle del primer resultado (failed).png
+# Dependencias
+node_modules/
+
+# Otros
+.DS_Store

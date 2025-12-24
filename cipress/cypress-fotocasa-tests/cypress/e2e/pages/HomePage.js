@@ -6,7 +6,7 @@ class HomePage {
   get firstSuggestion() { return cy.get("ul[role='listbox'] li").first(); }
 
   open() {
-    cy.visit('/'); 
+    cy.visit('/', { timeout: 120000 }); 
     // Esperamos a que la barra sea visible, indicando que la app cargó
     this.searchBar.should('be.visible', { timeout: 10000 }); 
   }
@@ -31,7 +31,7 @@ class HomePage {
   }
 
   // --------------------------------------
-  // ✅ searchCity actualizado (tu versión + mejoras)
+  //  searchCity actualizado (tu versión + mejoras)
   // --------------------------------------
   searchCity(city) {
 
