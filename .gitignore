@@ -4,3 +4,4 @@ node_modules/
 
 # Otros
 .DS_Store
+/cipress/cypress-fotocasa-tests/node_modules
